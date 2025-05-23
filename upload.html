@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Documents</title>
+    <link rel="stylesheet" href="upload.css">
+</head>
+<body>
+    <div class="upload-container">
+        <h2>Upload Your Medical Documents</h2>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="document" accept=".pdf,.jpg,.png,.docx" multiple>
+            <button type="button" id="uploadButton">Upload</button>
+            <p id="statusMessage" class="status"></p>
+        </form>
+        <div class="navigation">
+            <a href="documents.html" class="view-docs-btn">View Uploaded Documents</a>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const statusMessage = document.getElementById('statusMessage');
+    
+    // Check if localStorage is available
+    if (typeof(Storage) === "undefined") {
+        statusMessage.textContent = "Your browser doesn't support local storage. Please upgrade your browser.";
+        statusMessage.className = "status error";
+        return;
+    }
+    
+    uploadButton.addEventListener('click', function() {
+        if (fileInput.files.length === 0) {
+            statusMessage.textContent = "Please select at least one file to upload.";
+            statusMessage.className = "status error";
+            return;
+        }
+        
+        // Clear previous status
+        statusMessage.textContent = "";
+        statusMessage.className = "status";
+        
+        const uploadedDocuments = JSON.parse(localStorage.getItem('medicalDocuments')) || [];
+        let successCount = 0;
+        
+        Array.from(fileInput.files).forEach(file => {
+            // Read file as data URL
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const fileData = {
+                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    lastModified: file.lastModified,
+                    uploadDate: new Date().toISOString(),
+                    // Note: For real applications, you might not want to store the entire file content
+                    // in localStorage due to size limitations. Consider using server storage instead.
+                    dataUrl: e.target.result.substring(0, 100) + '...' // Storing truncated data URL just for demo
+                };
+                
+                uploadedDocuments.push(fileData);
+                successCount++;
+                
+                // Save the updated list
+                localStorage.setItem('medicalDocuments', JSON.stringify(uploadedDocuments));
+                
+                // Update status when all files are processed
+                if (successCount === fileInput.files.length) {
+                    statusMessage.textContent = `${successCount} document(s) uploaded successfully.`;
+                    statusMessage.className = "status success";
+                    
+                    // Reset the file input
+                    fileInput.value = '';
+                    
+                    // Add a small delay before redirect option
+                    setTimeout(() => {
+                        statusMessage.innerHTML += '<br>View your documents <a href="documents.html">here</a>.';
+                    }, 1000);
+                }
+            };
+            
+            reader.onerror = function() {
+                statusMessage.textContent = `Error reading file: ${file.name}`;
+                statusMessage.className = "status error";
+            };
+            
+            // Start reading the file
+            reader.readAsDataURL(file);
+        });
+    });
+});
+    </script>
+</body>
+</html>

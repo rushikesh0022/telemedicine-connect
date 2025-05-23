@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Portal - Your Health, Our Priority</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo-container img {
+            height: 60px;
+            border-radius: 8px;
+        }
+        
+        .nav-items {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-button {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+        }
+        
+        .services-container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 3rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+        
+        .service-card {
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            width: 300px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .image-container {
+            height: 180px;
+            overflow: hidden;
+        }
+        
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .service-card:hover .image-container img {
+            transform: scale(1.1);
+        }
+        
+        .card-content {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .card-content a {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .card-title {
+            color: #4285f4;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .card-description {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .specialities {
+            text-align: center;
+            margin: 3rem 0;
+            padding: 0 1rem;
+        }
+        
+        .specialities p {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .specialities-view {
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .problems {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin: 3rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+        
+        .problems-items {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            width: 120px;
+        }
+        
+        .problems-items:hover {
+            transform: translateY(-8px);
+        }
+        
+        .problems-items img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 0.8rem;
+            border-radius: 50%;
+            background-color: #e6f2ff;
+            padding: 15px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .problems-items:hover img {
+            background-color: #ccdfff;
+        }
+        
+        .problems-description {
+            text-align: center;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .slider-container {
+            position: relative;
+            max-width: 1300px;
+            margin: 2rem auto 4rem;
+            overflow: hidden;
+            padding: 0 1rem;
+        }
+        
+        .slider-heading {
+            text-align: left;
+            margin-bottom: 30px;
+            margin-left: 2rem;
+        }
+        
+        .specialties-grid {
+            display: flex;
+            gap: 20px;
+            transition: transform 0.5s ease;
+        }
+        
+        .specialty-card {
+            min-width: 300px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .specialty-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .specialty-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        
+        .specialty-content {
+            padding: 1.5rem;
+        }
+        
+        .specialty-title {
+            color: #4285f4;
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .specialty-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .arrow:hover {
+            background-color: #3367d6;
+        }
+        
+        .arrow.left {
+            left: 20px;
+        }
+        
+        .arrow.right {
+            right: 20px;
+        }
+        
+        .footer {
+            background-color: #263238;
+            color: #ffffff;
+            padding: 3rem 0 1rem;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .footer-section {
+            width: 250px;
+            margin-bottom: 2rem;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 1.2rem;
+            font-size: 1.3rem;
+            color: #4285f4;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-section ul li a {
+            color: #bdbdbd;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section ul li a:hover {
+            color: #ffffff;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #455a64;
+            margin-top: 1rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 1s ease forwards;
+        }
+        
+        .animate-slideInUp {
+            animation: slideInUp 0.8s ease forwards;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .services-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .footer-content {
+                justify-content: flex-start;
+                gap: 2rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-items {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .problems {
+                gap: 1.5rem;
+            }
+            
+            .slider-heading {
+                margin-left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header animate-fadeIn">
+        <div class="logo-container">
+            <img src="/api/placeholder/60/60" alt="Medical Logo">
+        </div>
+        <div class="nav-items">
+            <a href="nearby.html" class="nav-link">
+                <button class="nav-button">Find Doctor</button>
+            </a>
+            <a href="connect.html" class="nav-link">
+                <button class="nav-button">Video Conference</button>
+            </a>
+            <a href="documents.html" class="nav-link">
+                <button class="nav-button">Previous Transcripts</button>
+            </a>
+            <a href="upload.html" class="nav-link">
+                <button class="nav-button">Upload Documents</button>
+            </a>
+        </div>
+    </div>
+    
+    <div class="services-container animate-slideInUp" style="animation-delay: 0.2s;">
+        <div class="service-card">
+            <div class="image-container video-consultation">
+                <img src="/api/placeholder/300/180" alt="Doctor on video call">
+            </div>
+            <div class="card-content">
+                <a href="connect.html">
+                    <h2 class="card-title">Instant Video Consultation</h2>
+                    <p class="card-description">Connect within 60 secs</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="service-card">
+            <div class="image-container find-doctors">
+                <img src="/api/placeholder/300/180" alt="Doctor">
+            </div>
+            <div class="card-content">
+                <a href="nearby.html">
+                    <h2 class="card-title">Find Doctors Near You</h2>
+                    <p class="card-description">Confirmed appointments</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="service-card">
+            <div class="image-container doc-upload">
+                <img src="/api/placeholder/300/180" alt="Document Uploads">
+            </div>
+            <div class="card-content">
+                <a href="documents.html">
+                    <h2 class="card-title">Documents</h2>
+                    <p class="card-description">View Your Uploaded Documents</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="specialities animate-fadeIn" style="animation-delay: 0.4s;">
+        <p>Consult top online doctors for any health reasons</p>
+        <select class="specialities-view" title="specialities-view">
+            <option value="Pediatrics">Pediatrics</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Dermatology">Dermatology</option>
+            <option value="Orthopedics">Orthopedics</option>
+            <option value="Neurology">Neurology</option>
+            <option value="General Medicine">General Medicine</option>
+        </select>
+    </div>
+    
+    <div class="problems animate-slideInUp" style="animation-delay: 0.6s;">
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="Pediatrics">
+            <p class="problems-description">Pediatrics</p>
+        </div>
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="Cardiology">
+            <p class="problems-description">Cardiology</p>
+        </div>
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="Dermatology">
+            <p class="problems-description">Dermatology</p>
+        </div>
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="Orthopedics">
+            <p class="problems-description">Orthopedics</p>
+        </div>
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="Neurology">
+            <p class="problems-description">Neurology</p>
+        </div>
+        <div class="problems-items">
+            <img src="/api/placeholder/80/80" alt="General Medicine">
+            <p class="problems-description">General Medicine</p>
+        </div>
+    </div>
+    
+    <div class="slider-heading animate-fadeIn" style="animation-delay: 0.8s;">
+        <h1 style="font-size: 24px;color: #333;margin-bottom: 8px;">Book an appointment for an in-clinic consultation</h1>
+        <p style="font-size: 16px;color: #666;">Find experienced doctors across all specialties</p>
+    </div>
+    
+    <div class="slider-container animate-fadeIn" style="animation-delay: 1s;">
+        <button class="arrow left">←</button>
+        <div class="specialties-grid">
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Dentist" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Dentist</h2>
+                    <p class="specialty-description">Teeth ache? Schedule an appointment right now</p>
+                </div>
+            </div>
+            
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Gynecologist" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Gynecologist/Obstetrician</h2>
+                    <p class="specialty-description">Explore for women's health, pregnancy and infertility treatments</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Dietitian" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Dietitian/Nutrition</h2>
+                    <p class="specialty-description">Get guidance on eating right, weight management and sports nutrition</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Physiotherapist" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Physiotherapist</h2>
+                    <p class="specialty-description">Pulled a muscle? Get it treated by a trained physiotherapist</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="General Surgeon" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">General Surgeon</h2>
+                    <p class="specialty-description">Need to get operated? Find the right surgeon</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Orthopedist" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Orthopedist</h2>
+                    <p class="specialty-description">For Bone and Joints issues, spinal injuries and more</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="General Physician" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">General Physician</h2>
+                    <p class="specialty-description">Find the right family doctor in your neighborhood</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Pediatrician" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Pediatrician</h2>
+                    <p class="specialty-description">Child Specialists and Doctors for Infant</p>
+                </div>
+            </div>
+    
+            <div class="specialty-card">
+                <img src="/api/placeholder/300/180" alt="Gastroenterologist" class="specialty-image">
+                <div class="specialty-content">
+                    <h2 class="specialty-title">Gastroenterologist</h2>
+                    <p class="specialty-description">Explore for issues related to digestive system, liver and pancreas</p>
+                </div>
+            </div>
+        </div>
+        <button class="arrow right">→</button>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Us</h3>
+                <ul>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Contact US</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>For Patients</h3>
+                <ul>
+                    <li><a href="#">Search for Doctors</a></li>
+                    <li><a href="#">Book Diagnostic Tests</a></li>
+                    <li><a href="#">Book Full Body Checkups</a></li>
+                    <li><a href="#">Consultation</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>For Doctors</h3>
+                <ul>
+                    <li><a href="#">Profile</a></li>
+                    <li><a href="#">Add Clinic</a></li>
+                    <li><a href="#">Appointments</a></li>
+                    <li><a href="#">Medical Records</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Socials</h3>
+                <ul>
+                    <li><a href="#">Facebook</a></li>
+                    <li><a href="#">Twitter</a></li>
+                    <li><a href="#">LinkedIn</a></li>
+                    <li><a href="#">Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Healthcare Portal. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Slider functionality
+            const slider = document.querySelector('.specialties-grid');
+            const leftArrow = document.querySelector('.arrow.left');
+            const rightArrow = document.querySelector('.arrow.right');
+            const cardWidth = 320; 
+            let currentOffset = 0;
+            const visibleCards = Math.floor(window.innerWidth / cardWidth) > 4 ? 4 : Math.floor(window.innerWidth / cardWidth);
+            
+            // Add fade-in animations on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -100px 0px'
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            
+            // Initialize elements with opacity 0
+            document.querySelectorAll('.service-card, .problems-items, .specialty-card').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(40px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+            
+            leftArrow.addEventListener('click', () => {
+                if (currentOffset < 0) {
+                    currentOffset += cardWidth;
+                    slider.style.transform = `translateX(${currentOffset}px)`;
+                }
+            });
+            
+            rightArrow.addEventListener('click', () => {
+                const maxOffset = -(slider.children.length - visibleCards) * cardWidth;
+                if (currentOffset > maxOffset) {
+                    currentOffset -= cardWidth;
+                    slider.style.transform = `translateX(${currentOffset}px)`;
+                }
+            });
+            
+            // Responsive adjustment for slider
+            window.addEventListener('resize', () => {
+                const newVisibleCards = Math.floor(window.innerWidth / cardWidth) > 4 ? 4 : Math.floor(window.innerWidth / cardWidth);
+                if (newVisibleCards !== visibleCards) {
+                    currentOffset = 0;
+                    slider.style.transform = `translateX(0px)`;
+                }
+            });
+            
+            // Add hover effects programmatically for better performance
+            const hoverElements = document.querySelectorAll('.service-card, .problems-items, .specialty-card');
+            hoverElements.forEach(el => {
+                el.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px)';
+                    this.style.boxShadow = '0 15px 30px rgba(0, 0, 0, 0.1)';
+                });
+                
+                el.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.05)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

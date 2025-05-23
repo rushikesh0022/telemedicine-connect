@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lifeline Login Portal</title>
+    <style>
+        body {
+            background-color: #e8f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .main-container {
+            background-color: white;
+            padding: 60px;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            width: 95%;
+            max-width: 1200px;
+            min-height: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px;
+        }
+        .illustration-container {
+            flex: 1;
+            padding-right: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 300px;
+            max-width: 1200px;
+            min-height: 350px;
+        }
+        .logo {
+            width: 60px;
+            margin-bottom: 20px;
+        }
+        .login-container h2 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .login-container p {
+            margin: 0 0 24px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 24px;
+        }
+        .input-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .login-button {
+            background-color: #4FB3C5;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .login-button:hover {
+            background-color: #45a0b1;
+        }
+        .medical-staff {
+            width: 100%;
+            max-width: 650px;
+            height: auto;
+        }
+        .error-message {
+            color: #ff3333;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .email-display {
+            font-weight: 500;
+            color: #333;
+        }
+        .signup-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .signup-link a {
+            color: #4FB3C5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="illustration-container">
+            <img src="img1.webp" alt="Medical Staff Illustration" class="medical-staff">
+        </div>
+        <div class="login-container">
+            <img src="2.avif" alt="Lifeline Logo" class="logo">
+            <h2>Welcome Back</h2>
+            <p>Please enter your password for <span id="email-display" class="email-display"></span></p>
+            <div class="input-group">
+                <label>Password
+                    <input type="password" id="password-input">
+                </label>
+            </div>
+            <button class="login-button" id="login-button">LOGIN</button>
+            <p id="error-message" class="error-message">Authentication failed. Please check your password.</p>
+            <p class="signup-link">Don't have an account? <a href="signup.html">Sign up</a></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVo4DCo6rUKkJYqYqAsRncYArkKI51DvY",
+            authDomain: "wlness.firebaseapp.com",
+            projectId: "wlness",
+            storageBucket: "wlness.firebasestorage.app",
+            messagingSenderId: "1097432017463",
+            appId: "1:1097432017463:web:286ef78f1ab21956ac2db2",
+            measurementId: "G-SRJ6QRN4GH"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Get elements
+        const emailDisplay = document.getElementById('email-display');
+        const passwordInput = document.getElementById('password-input');
+        const loginButton = document.getElementById('login-button');
+        const errorMessage = document.getElementById('error-message');
+
+        // Get email from session storage
+        const email = sessionStorage.getItem('userEmail');
+        
+        // If no email is found, redirect back to login page
+        if (!email) {
+            window.location.href = 'login.html';
+        } else {
+            // Display email
+            emailDisplay.textContent = email;
+        }
+
+        // Add click event to login button
+        loginButton.addEventListener('click', async function() {
+            const password = passwordInput.value;
+            
+            // Check if password is provided
+            if (!password) {
+                errorMessage.textContent = 'Please enter your password.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Try to sign in
+                await signInWithEmailAndPassword(auth, email, password)
+                    .then((userCredential) => {
+                        // Save login data to Firestore
+                        saveLoginData(email, userCredential.user.uid);
+                        // Redirect to main page
+                        window.location.href = 'main.html';
+                    })
+                    .catch(async (error) => {
+                        // If user doesn't exist, create account
+                        if (error.code === 'auth/user-not-found') {
+                            try {
+                                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                                // Save login data to Firestore
+                                saveLoginData(email, userCredential.user.uid);
+                                // Redirect to main page
+                                window.location.href = 'main.html';
+                            } catch (createError) {
+                                handleError(createError);
+                            }
+                        } else {
+                            handleError(error);
+                        }
+                    });
+            } catch (error) {
+                handleError(error);
+            }
+        });
+
+        // Function to save login data to Firestore
+        async function saveLoginData(email, userId) {
+            try {
+                const timestamp = new Date();
+                await setDoc(doc(db, "users", userId), {
+                    email: email,
+                    lastLogin: timestamp,
+                    createdAt: timestamp
+                }, { merge: true });
+                
+                // Log login activity
+                const loginId = `${userId}_${timestamp.getTime()}`;
+                await setDoc(doc(db, "logins", loginId), {
+                    userId: userId,
+                    email: email,
+                    timestamp: timestamp,
+                    device: navigator.userAgent
+                });
+            } catch (error) {
+                console.error("Error saving login data: ", error);
+            }
+        }
+
+        // Function to handle authentication errors
+        function handleError(error) {
+            console.error("Authentication error: ", error);
+            
+            switch(error.code) {
+                case 'auth/wrong-password':
+                    errorMessage.textContent = 'Incorrect password. Please try again.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage.textContent = 'Password should be at least 6 characters.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage.textContent = 'Invalid email format.';
+                    break;
+                default:
+                    errorMessage.textContent = 'Authentication failed. Please try again.';
+            }
+            
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

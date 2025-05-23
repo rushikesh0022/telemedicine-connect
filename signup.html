@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lifeline Sign Up</title>
+    <style>
+        body {
+            background-color: #e8f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .main-container {
+            background-color: white;
+            padding: 60px;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            width: 95%;
+            max-width: 1200px;
+            min-height: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px;
+        }
+        .illustration-container {
+            flex: 1;
+            padding-right: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .signup-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            width: 300px;
+            max-width: 1200px;
+            min-height: 350px;
+        }
+        .logo {
+            width: 60px;
+            margin-bottom: 20px;
+        }
+        .signup-container h2 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .signup-container p {
+            margin: 0 0 24px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .signup-button {
+            background-color: #4FB3C5;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            margin-top: 8px;
+        }
+        .signup-button:hover {
+            background-color: #45a0b1;
+        }
+        .medical-staff {
+            width: 100%;
+            max-width: 650px;
+            height: auto;
+        }
+        .error-message {
+            color: #ff3333;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+        .login-link {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .login-link a {
+            color: #4FB3C5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="illustration-container">
+            <img src="img1.webp" alt="Medical Staff Illustration" class="medical-staff">
+        </div>
+        <div class="signup-container">
+            <img src="2.avif" alt="Lifeline Logo" class="logo">
+            <h2>Create Account</h2>
+            <p>Please fill in your details to sign up</p>
+            <div class="input-group">
+                <label>Full Name
+                    <input type="text" id="name-input" placeholder="Enter your full name">
+                </label>
+            </div>
+            <div class="input-group">
+                <label>Email
+                    <input type="email" id="email-input" placeholder="Enter your email">
+                </label>
+            </div>
+            <div class="input-group">
+                <label>Password
+                    <input type="password" id="password-input" placeholder="Create a password">
+                </label>
+            </div>
+            <div class="input-group">
+                <label>Confirm Password
+                    <input type="password" id="confirm-password-input" placeholder="Confirm your password">
+                </label>
+            </div>
+            <button class="signup-button" id="signup-button">SIGN UP</button>
+            <p id="error-message" class="error-message">Error message will appear here</p>
+            <p class="login-link">Already have an account? <a href="login.html">Log in</a></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDVo4DCo6rUKkJYqYqAsRncYArkKI51DvY",
+            authDomain: "wlness.firebaseapp.com",
+            projectId: "wlness",
+            storageBucket: "wlness.firebasestorage.app",
+            messagingSenderId: "1097432017463",
+            appId: "1:1097432017463:web:286ef78f1ab21956ac2db2",
+            measurementId: "G-SRJ6QRN4GH"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Get elements
+        const nameInput = document.getElementById('name-input');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const confirmPasswordInput = document.getElementById('confirm-password-input');
+        const signupButton = document.getElementById('signup-button');
+        const errorMessage = document.getElementById('error-message');
+
+        // Add click event to signup button
+        signupButton.addEventListener('click', async function() {
+            // Reset error message
+            errorMessage.style.display = 'none';
+            
+            // Get input values
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            // Validate inputs
+            if (!name) {
+                showError('Please enter your full name');
+                return;
+            }
+            
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('Please enter a valid email address');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            try {
+                // Create user with email and password
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Save additional user data to Firestore
+                await saveUserData(user.uid, name, email);
+                
+                // Redirect to main page
+                window.location.href = 'main.html';
+            } catch (error) {
+                handleSignupError(error);
+            }
+        });
+
+        // Function to save user data to Firestore
+        async function saveUserData(userId, name, email) {
+            try {
+                const timestamp = new Date();
+                await setDoc(doc(db, "users", userId), {
+                    name: name,
+                    email: email,
+                    createdAt: timestamp,
+                    lastLogin: timestamp
+                });
+                
+                // Log signup activity
+                const activityId = `signup_${userId}_${timestamp.getTime()}`;
+                await setDoc(doc(db, "activities", activityId), {
+                    userId: userId,
+                    email: email,
+                    activity: "signup",
+                    timestamp: timestamp,
+                    device: navigator.userAgent
+                });
+            } catch (error) {
+                console.error("Error saving user data: ", error);
+            }
+        }
+
+        // Function to show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        // Function to handle signup errors
+        function handleSignupError(error) {
+            console.error("Signup error: ", error);
+            
+            switch(error.code) {
+                case 'auth/email-already-in-use':
+                    showError('This email is already registered. Please log in instead.');
+                    break;
+                case 'auth/invalid-email':
+                    showError('Invalid email format.');
+                    break;
+                case 'auth/weak-password':
+                    showError('Password is too weak. It should be at least 6 characters.');
+                    break;
+                default:
+                    showError('Error creating account. Please try again later.');
+            }
+        }
+    </script>
+</body>
+</html>

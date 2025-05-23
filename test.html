@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Finder</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #f5f7fa;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .search-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        select, input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        select {
+            background-color: white;
+            min-width: 200px;
+        }
+        input {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        #list-container {
+            flex: 1;
+            min-width: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .list-header {
+            position: sticky;
+            top: 0;
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doctor-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .doctor-item:hover {
+            background-color: #f5f7fa;
+        }
+        .doctor-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        .doctor-address {
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        .doctor-details {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .doctor-rating {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .doctor-specialization {
+            color: #27ae60;
+            font-style: italic;
+        }
+        .no-results {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            #list-container {
+                max-height: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Doctor Finder</h1>
+    </header>
+    
+    <div class="search-container">
+        <input type="text" id="location-input" placeholder="Enter your location">
+        <select id="specialty-select">
+            <option value="">All Specialties</option>
+            <option value="orthopedic">Orthopedic</option>
+            <option value="cardiology">Cardiology</option>
+            <option value="dermatology">Dermatology</option>
+            <option value="pediatrics">Pediatrics</option>
+            <option value="neurology">Neurology</option>
+            <option value="gynecology">Gynecology</option>
+            <option value="ophthalmology">Ophthalmology</option>
+            <option value="dentist">Dentist</option>
+            <option value="psychiatry">Psychiatry</option>
+        </select>
+        <button id="search-btn">Search</button>
+    </div>
+    
+    <div class="container">
+        <div id="list-container">
+            <div class="list-header">
+                <span>Search Results</span>
+                <span id="results-count"></span>
+            </div>
+            <div id="doctors-list">
+                <div class="no-results">Enter a location and specialty to find doctors</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> The information provided is based on publicly available data and is not an endorsement of any particular healthcare provider. Please conduct your own research and consult with your primary care physician to make an informed decision.</p>
+    </div>
+
+    <script>
+        // Global variables
+        let apiKey = "YOUR_GEMINI_API_KEY"; // Replace with your actual Gemini API key
+        
+        // Add event listeners when the window loads
+        window.onload = function() {
+            document.getElementById('search-btn').addEventListener('click', searchDoctors);
+            document.getElementById('location-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchDoctors();
+                }
+            });
+        };
+        
+        // Search for doctors based on input location and specialty
+        function searchDoctors() {
+            const locationInput = document.getElementById('location-input').value;
+            const specialty = document.getElementById('specialty-select').value || "doctor";
+            
+            if (!locationInput) {
+                alert("Please enter a location");
+                return;
+            }
+            
+            // Show loading state
+            const listContainer = document.getElementById('doctors-list');
+            listContainer.innerHTML = '<div class="loading">Searching for doctors in your area...</div>';
+            document.getElementById('results-count').textContent = '';
+            
+            // In a real implementation, this would make an API call to your backend
+            // which would then call the Gemini API with proper authentication
+            
+            // Simulate API call with mock data for the UI
+            simulateGeminiAPICall(locationInput, specialty)
+                .then(displayDoctors)
+                .catch(error => {
+                    console.error("Error:", error);
+                    listContainer.innerHTML = `
+                        <div class="no-results">
+                            <p>An error occurred while searching for doctors. Please try again later.</p>
+                        </div>`;
+                });
+        }
+        
+        // Simulate a call to the Gemini API
+        function simulateGeminiAPICall(location, specialty) {
+            return new Promise((resolve) => {
+                // This is where you would normally make the actual API call
+                // For demo purposes, we're generating mock data
+                
+                // Simulate network delay
+                setTimeout(() => {
+                    // Mock response data structure (in a real app, this would come from the API)
+                    const mockData = generateMockDoctorData(location, specialty);
+                    resolve(mockData);
+                }, 1500);
+            });
+        }
+        
+        // Generate mock doctor data based on location and specialty
+        function generateMockDoctorData(location, specialty) {
+            // This mimics the structure we'd expect from processing Gemini's response
+            const specialties = {
+                "orthopedic": "Orthopedic Surgeon",
+                "cardiology": "Cardiologist",
+                "dermatology": "Dermatologist",
+                "pediatrics": "Pediatrician",
+                "neurology": "Neurologist",
+                "gynecology": "Gynecologist",
+                "ophthalmology": "Ophthalmologist",
+                "dentist": "Dentist",
+                "psychiatry": "Psychiatrist",
+                "doctor": "General Physician"
+            };
+            
+            const specialtyTitle = specialties[specialty] || "Doctor";
+            
+            return {
+                doctors: [
+                    {
+                        name: `Dr. A. S. Murthy`,
+                        specialization: specialtyTitle,
+                        address: `Medical Center, Near Central Bus Stand, ${location}`,
+                        rating: 4.8,
+                        details: `Expertise in joint replacement and arthroscopic surgeries. Over 15 years of experience.`
+                    },
+                    {
+                        name: `Dr. B. Lakshmi Devi`,
+                        specialization: specialtyTitle,
+                        address: `City Hospital, Main Road, ${location}`,
+                        rating: 4.6,
+                        details: `Specializes in sports injuries and pediatric care. Compassionate treatment.`
+                    },
+                    {
+                        name: `Dr. C. Ramana`,
+                        specialization: specialtyTitle,
+                        address: `Health Care Center, Market Area, ${location}`,
+                        rating: 4.7,
+                        details: `Experienced in trauma and fracture management. Efficient surgical techniques.`
+                    },
+                    {
+                        name: `Dr. D. Krishna Mohan`,
+                        specialization: specialtyTitle,
+                        address: `Wellness Clinic, Gandhi Nagar, ${location}`,
+                        rating: 4.5,
+                        details: `Focuses on minimally invasive procedures. Thorough approach to patient care.`
+                    },
+                    {
+                        name: `Dr. E. Priya Sharma`,
+                        specialization: specialtyTitle,
+                        address: `Community Hospital, Near Railway Station, ${location}`,
+                        rating: 4.9,
+                        details: `Offers comprehensive care including non-surgical treatments and rehabilitation.`
+                    }
+                ],
+                count: 5
+            };
+        }
+        
+        // Display doctors in the list
+        function displayDoctors(data) {
+            const listContainer = document.getElementById('doctors-list');
+            listContainer.innerHTML = '';
+            
+            if (!data.doctors || data.doctors.length === 0) {
+                listContainer.innerHTML = '<div class="no-results">No doctors found in this area. Try a different location or specialty.</div>';
+                document.getElementById('results-count').textContent = '(0 found)';
+                return;
+            }
+            
+            document.getElementById('results-count').textContent = `(${data.count} found)`;
+            
+            data.doctors.forEach(doctor => {
+                // Create list item
+                const doctorItem = document.createElement('div');
+                doctorItem.className = 'doctor-item';
+                doctorItem.innerHTML = `
+                    <div class="doctor-name">${doctor.name}</div>
+                    <div class="doctor-specialization">${doctor.specialization}</div>
+                    <div class="doctor-address">${doctor.address}</div>
+                    <div class="doctor-details">
+                        <span class="doctor-rating">${doctor.rating} ⭐</span>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 14px;">${doctor.details}</p>
+                `;
+                
+                listContainer.appendChild(doctorItem);
+            });
+        }
+    </script>
+</body>
+</html>

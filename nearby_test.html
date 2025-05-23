@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearby Doctors</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=&libraries=places"></script>
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        function initMap() {
+
+            const defaultLocation = { lat: 12.9716, lng: 77.5946 }; // Bangalore as example
+
+            // Create the map
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: defaultLocation,
+                zoom: 14
+            });
+
+            // Get user location if possible
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userLocation);
+
+                    // Place marker for user location
+                    new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: "Your Location",
+                        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    });
+
+                    // Find nearby doctors
+                    findNearbyDoctors(map, userLocation);
+                }, () => {
+                    console.error("Geolocation permission denied. Showing default location.");
+                    findNearbyDoctors(map, defaultLocation);
+                });
+            } else {
+                console.error("Geolocation not supported.");
+                findNearbyDoctors(map, defaultLocation);
+            }
+        }
+
+        function findNearbyDoctors(map, location) {
+            const service = new google.maps.places.PlacesService(map);
+            const request = {
+                location: location,
+                radius: 5000, // 5 km radius
+                type: "doctor" // Searches for doctors
+            };
+
+            service.nearbySearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    results.forEach(place => {
+                        new google.maps.Marker({
+                            position: place.geometry.location,
+                            map: map,
+                            title: place.name
+                        });
+                    });
+                } else {
+                    console.error("No nearby doctors found.");
+                }
+            });
+        }
+
+        // Initialize map on window load
+        window.onload = initMap;
+    </script>
+</body>
+</html>

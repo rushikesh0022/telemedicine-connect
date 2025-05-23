@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video Call</title>
+  <link rel="stylesheet" href="connect.css" />
+  <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+</head>
+<body>
+  <div id="bg-3d" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;"></div>
+  <div class="main-content">
+    <h2><img src="Assets/logo.avif" alt="Logo" style="height:2.2em;vertical-align:middle;margin-right:0.5em;border-radius:8px;box-shadow:0 2px 8px #0002;">Video Call</h2>
+    <div class="video-container">
+      <div class="video-card">
+        <video id="localVideo" autoplay playsinline></video>
+        <div class="video-label">You</div>
+      </div>
+      <div class="video-card">
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="video-label">Remote</div>
+      </div>
+    </div>
+    <div class="status-indicator"><span class="status-dot disconnected" id="callStatusDot"></span><span id="callStatusText">Disconnected</span></div>
+    <div class="controls">
+      <button id="startCall"><svg width="18" height="18" style="vertical-align:middle;margin-right:6px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.08"></path><path d="M16 12l-4-4-4 4m4-4v12"></path></svg>Start Call</button>
+      <button id="endCall" disabled><svg width="18" height="18" style="vertical-align:middle;margin-right:6px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>End Call</button>
+    </div>    <section class="transcript-section transcript-container">
+      <p><strong><br>Live Transcript:<br></strong></p>
+      <div id="transcript">Waiting for speech...</div>
+    </section>
+    
+    <!-- Chat interface -->
+    <div class="chat-container" id="chatContainer">
+      <div class="chat-header">
+        <span>Chat</span>
+        <button class="close-btn" id="closeChatBtn">×</button>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Type a message...">
+        <button id="sendMessageBtn">Send</button>
+      </div>
+    </div>
+    
+    <!-- Additional controls -->
+    <div class="additional-controls">
+      <button id="toggleChatBtn" class="control-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Chat
+      </button>
+      <button id="toggleScreenShareBtn" class="control-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        Share Screen
+      </button>
+      <button id="toggleMuteBtn" class="control-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="muteIcon">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        Mute
+      </button>
+      <button id="toggleVideoBtn" class="control-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" id="videoIcon">
+          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+        </svg>
+        Video
+      </button>
+    </div>
+    
+    <!-- Room joining modal -->
+    <div class="modal" id="roomModal">
+      <div class="modal-content">
+        <h3>Join Video Call</h3>
+        <div class="input-group">
+          <label for="userName">Your Name</label>
+          <input type="text" id="userName" placeholder="Enter your name">
+        </div>
+        <div class="input-group">
+          <label for="roomId">Room ID</label>
+          <input type="text" id="roomId" placeholder="Enter room ID">
+          <button id="generateRoomBtn">Generate</button>
+        </div>
+        <button id="joinRoomBtn" class="primary-btn">Join Room</button>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="3d-bg.js"></script>
+  <script>
+    import { create3DBackground } from './3d-bg.js';
+    create3DBackground('bg-3d');    // Connect to Socket.IO server
+    const socket = io('http://localhost:3000');
+
+    let localStream = null;
+    let peerConnection = null;
+    let screenStream = null;
+    let isScreenSharing = false;
+    let isMuted = false;
+    let isVideoOff = false;
+    let currentRoom = null;
+    let userName = null;
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+    // Get element references
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const startCallButton = document.getElementById('startCall');
+    const endCallButton = document.getElementById('endCall');
+    const transcriptDiv = document.getElementById("transcript");
+    const callStatusDot = document.getElementById('callStatusDot');
+    const callStatusText = document.getElementById('callStatusText');
+    
+    // Chat elements
+    const chatContainer = document.getElementById('chatContainer');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const toggleChatBtn = document.getElementById('toggleChatBtn');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    
+    // Media control elements
+    const toggleScreenShareBtn = document.getElementById('toggleScreenShareBtn');
+    const toggleMuteBtn = document.getElementById('toggleMuteBtn');
+    const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+    const muteIcon = document.getElementById('muteIcon');
+    const videoIcon = document.getElementById('videoIcon');
+    
+    // Room modal elements
+    const roomModal = document.getElementById('roomModal');
+    const userNameInput = document.getElementById('userName');
+    const roomIdInput = document.getElementById('roomId');
+    const generateRoomBtn = document.getElementById('generateRoomBtn');
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+
+    // Show room modal on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      roomModal.style.display = 'flex';
+    });
+
+    // Generate random room ID
+    generateRoomBtn.addEventListener('click', () => {
+      const randomId = Math.random().toString(36).substring(2, 10);
+      roomIdInput.value = randomId;
+    });
+
+    // Join room
+    joinRoomBtn.addEventListener('click', () => {
+      userName = userNameInput.value.trim();
+      currentRoom = roomIdInput.value.trim();
+      
+      if (!userName) {
+        alert('Please enter your name');
+        return;
+      }
+      
+      if (!currentRoom) {
+        alert('Please enter a room ID or generate one');
+        return;
+      }
+      
+      // Hide modal
+      roomModal.style.display = 'none';
+      
+      // Update UI to show room info
+      document.querySelector('h2').innerText = `Video Call: Room ${currentRoom}`;
+      
+      // Join the room
+      socket.emit('join-room', {
+        roomId: currentRoom,
+        userId: socket.id,
+        userName: userName
+      });
+    });
+
+    // Event Listeners
+    startCallButton.addEventListener('click', startCall);
+    endCallButton.addEventListener('click', endCall);
+    
+    // Chat controls
+    toggleChatBtn.addEventListener('click', () => {
+      chatContainer.style.display = chatContainer.style.display === 'flex' ? 'none' : 'flex';
+    });
+    
+    closeChatBtn.addEventListener('click', () => {
+      chatContainer.style.display = 'none';
+    });
+    
+    sendMessageBtn.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+    
+    // Media controls
+    toggleScreenShareBtn.addEventListener('click', toggleScreenShare);
+    toggleMuteBtn.addEventListener('click', toggleMute);
+    toggleVideoBtn.addEventListener('click', toggleVideo);
+
+    function setCallStatus(connected) {
+      if (connected) {
+        callStatusDot.classList.remove('disconnected');
+        callStatusDot.classList.add('connected');
+        callStatusText.textContent = 'Connected';
+      } else {
+        callStatusDot.classList.remove('connected');
+        callStatusDot.classList.add('disconnected');
+        callStatusText.textContent = 'Disconnected';
+      }
+    }
+
+    async function startCall() {
+      try {
+        // Get user media
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+
+        // Create a new peer connection
+        peerConnection = new RTCPeerConnection(config);
+
+        // Add local stream tracks to peer connection
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        // Display remote stream when available
+        peerConnection.ontrack = event => {
+          if (event.streams && event.streams[0]) {
+            remoteVideo.srcObject = event.streams[0];
+          }
+        };
+
+        // ICE candidate handling
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', {
+              candidate: event.candidate,
+              target: currentRoom // Send to room
+            });
+          }
+        };
+
+        // Connection state
+        peerConnection.onconnectionstatechange = () => {
+          setCallStatus(peerConnection.connectionState === 'connected');
+        };
+
+        // Create and send offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('offer', {
+          offer: offer,
+          target: currentRoom // Send to room
+        });
+
+        // Enable the End Call button and disable Start Call button
+        startCallButton.disabled = true;
+        endCallButton.disabled = false;
+        setCallStatus(false);
+      } catch (error) {
+        console.error("Error starting call:", error);
+        alert("Could not start the call. Please check your webcam and microphone permissions.");
+      }
+    }
+
+    // Listen for incoming offer
+    socket.on('offer', async data => {
+      try {
+        // If no local stream exists, get it first
+        if (!localStream) {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          localVideo.srcObject = localStream;
+        }
+
+        peerConnection = new RTCPeerConnection(config);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+          if (event.streams && event.streams[0]) {
+            remoteVideo.srcObject = event.streams[0];
+          }
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', {
+              candidate: event.candidate,
+              target: data.sender // Send back to sender
+            });
+          }
+        };
+
+        peerConnection.onconnectionstatechange = () => {
+          setCallStatus(peerConnection.connectionState === 'connected');
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('answer', {
+          answer: answer,
+          target: data.sender // Send back to sender
+        });
+
+        // Enable End Call button
+        startCallButton.disabled = true;
+        endCallButton.disabled = false;
+        setCallStatus(false);
+      } catch (error) {
+        console.error("Error handling offer:", error);
+      }
+    });
+
+    // Listen for answer from remote peer
+    socket.on('answer', async data => {
+      try {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+      } catch (error) {
+        console.error("Error setting remote description:", error);
+      }
+    });
+
+    // Listen for ICE candidates from remote peer
+    socket.on('ice-candidate', async data => {
+      try {
+        if (peerConnection) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      } catch (error) {
+        console.error("Error adding received ICE candidate:", error);
+      }
+    });
+
+    // Handle new user joining
+    socket.on('user-joined', user => {
+      addChatSystemMessage(`${user.userName} joined the room`);
+    });
+    
+    // Handle user leaving
+    socket.on('user-left', user => {
+      addChatSystemMessage(`${user.userName} left the room`);
+      
+      // If we were connected to this user, reset UI
+      if (remoteVideo.srcObject && peerConnection.connectionState === 'connected') {
+        endCall();
+      }
+    });
+    
+    // Handle chat messages
+    socket.on('chat-message', data => {
+      addChatMessage(data.sender, data.message, false);
+    });
+    
+    // Handle screen sharing notifications
+    socket.on('screen-share-started', data => {
+      addChatSystemMessage(`${data.userName} started sharing their screen`);
+    });
+    
+    socket.on('screen-share-stopped', data => {
+      addChatSystemMessage(`Screen sharing stopped`);
+    });
+
+    function endCall() {
+      if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+      }
+      if (localStream) {
+        // Stop all media tracks
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+        screenStream = null;
+        isScreenSharing = false;
+        toggleScreenShareBtn.classList.remove('active');
+      }
+      localVideo.srcObject = null;
+      remoteVideo.srcObject = null;
+      startCallButton.disabled = false;
+      endCallButton.disabled = true;
+      setCallStatus(false);
+      console.log("Call ended.");
+    }
+    
+    // Chat functions
+    function sendChatMessage() {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      
+      // Add message to local chat
+      addChatMessage(userName, message, true);
+      
+      // Send message to others
+      socket.emit('chat-message', {
+        message: message,
+        roomId: currentRoom
+      });
+      
+      // Clear input
+      chatInput.value = '';
+    }
+    
+    function addChatMessage(sender, message, isOutgoing) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message');
+      messageElement.classList.add(isOutgoing ? 'outgoing' : 'incoming');
+      
+      const content = document.createElement('div');
+      content.classList.add('message-content');
+      content.textContent = message;
+      
+      const meta = document.createElement('div');
+      meta.classList.add('message-meta');
+      
+      // Only show sender name for incoming messages
+      if (!isOutgoing) {
+        meta.textContent = sender;
+      } else {
+        meta.textContent = 'You';
+      }
+      
+      messageElement.appendChild(content);
+      messageElement.appendChild(meta);
+      chatMessages.appendChild(messageElement);
+      
+      // Auto scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function addChatSystemMessage(message) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message', 'system');
+      messageElement.style.backgroundColor = 'rgba(0,0,0,0.2)';
+      messageElement.style.color = 'rgba(255,255,255,0.7)';
+      messageElement.style.textAlign = 'center';
+      messageElement.style.margin = '0.5rem auto';
+      messageElement.style.padding = '0.5rem';
+      messageElement.style.borderRadius = '8px';
+      messageElement.style.maxWidth = '100%';
+      
+      messageElement.textContent = message;
+      chatMessages.appendChild(messageElement);
+      
+      // Auto scroll to bottom
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Media control functions
+    async function toggleScreenShare() {
+      if (isScreenSharing) {
+        // Stop screen sharing
+        if (screenStream) {
+          screenStream.getTracks().forEach(track => {
+            track.stop();
+            
+            // Remove from peer connection
+            const senders = peerConnection.getSenders();
+            const sender = senders.find(s => s.track.kind === track.kind);
+            if (sender) {
+              peerConnection.removeTrack(sender);
+            }
+          });
+          
+          screenStream = null;
+        }
+        
+        // Add back camera video
+        if (localStream) {
+          const videoTrack = localStream.getVideoTracks()[0];
+          if (videoTrack) {
+            const senders = peerConnection.getSenders();
+            const sender = senders.find(s => s.track.kind === 'video');
+            if (sender) {
+              sender.replaceTrack(videoTrack);
+            }
+            
+            // Update local video
+            localVideo.srcObject = localStream;
+          }
+        }
+        
+        isScreenSharing = false;
+        toggleScreenShareBtn.classList.remove('active');
+        toggleScreenShareBtn.innerHTML = `
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+            <line x1="8" y1="21" x2="16" y2="21"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          Share Screen
+        `;
+        
+        // Notify others
+        socket.emit('stop-screen-share', { roomId: currentRoom });
+        
+      } else {
+        // Start screen sharing
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          
+          // Update local video preview
+          localVideo.srcObject = screenStream;
+          
+          // Replace video track in peer connection
+          if (peerConnection) {
+            const videoTrack = screenStream.getVideoTracks()[0];
+            const senders = peerConnection.getSenders();
+            const sender = senders.find(s => s.track.kind === 'video');
+            if (sender) {
+              sender.replaceTrack(videoTrack);
+            }
+          }
+          
+          // Listen for when user stops sharing via browser UI
+          screenStream.getVideoTracks()[0].onended = () => {
+            toggleScreenShare();
+          };
+          
+          isScreenSharing = true;
+          toggleScreenShareBtn.classList.add('active');
+          toggleScreenShareBtn.innerHTML = `
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            Stop Sharing
+          `;
+          
+          // Notify others
+          socket.emit('start-screen-share', { roomId: currentRoom });
+          
+        } catch (error) {
+          console.error('Error starting screen share:', error);
+        }
+      }
+    }
+    
+    function toggleMute() {
+      if (!localStream) return;
+      
+      const audioTracks = localStream.getAudioTracks();
+      if (audioTracks.length === 0) return;
+      
+      const audioTrack = audioTracks[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      
+      isMuted = !audioTrack.enabled;
+      toggleMuteBtn.classList.toggle('muted', isMuted);
+      toggleMuteBtn.innerHTML = isMuted ? `
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+          <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        Unmute
+      ` : `
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        Mute
+      `;
+    }
+    
+    function toggleVideo() {
+      if (!localStream) return;
+      
+      const videoTracks = localStream.getVideoTracks();
+      if (videoTracks.length === 0) return;
+      
+      const videoTrack = videoTracks[0];
+      videoTrack.enabled = !videoTrack.enabled;
+      
+      isVideoOff = !videoTrack.enabled;
+      toggleVideoBtn.classList.toggle('video-off', isVideoOff);
+      toggleVideoBtn.innerHTML = isVideoOff ? `
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="1" y1="1" x2="23" y2="23"></line>
+          <path d="M13.79 8.21L15.17 6.79C19.47 11.1 19.47 12.9 15.17 17.21L13.79 15.79C16.53 13.04 16.53 10.96 13.79 8.21Z"></path>
+          <path d="M6.53 9.47L8.53 11.47L10.53 13.47L7.53 16.47C6.39 15.33 5.82 14.02 5.82 12.5C5.82 10.98 6.39 9.67 7.53 8.53L6.53 9.47Z"></path>
+        </svg>
+        Show Video
+      ` : `
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="23 7 16 12 23 17 23 7"></polygon>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+        </svg>
+        Hide Video
+      `;
+    }
+
+    // Live Transcription
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      let lastTranscript = '';
+      recognition.onresult = event => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join(' ');
+        transcriptDiv.innerHTML = transcript;
+        lastTranscript = transcript;
+      };
+      recognition.onerror = event => {
+        transcriptDiv.innerHTML = `<span style='color:#e74c3c'>Speech recognition error: ${event.error}</span>`;
+      };
+      recognition.onend = () => {
+        // Auto-restart for continuous experience
+        recognition.start();
+      };
+      recognition.start();
+    } else {
+      transcriptDiv.innerHTML = "<span style='color:#e74c3c'>Speech recognition is not supported in this browser.</span>";
+    }
+  </script>
+</body>
+</html>
